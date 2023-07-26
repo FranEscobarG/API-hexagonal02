@@ -1,29 +1,25 @@
 import { Request, Response } from "express";
 
-import { CreateProductUseCase } from "../../application/CreateProductUseCase";
-//import { Product } from "../../domain/Product";
+import { RegisterDataSensorUseCase } from "../../application/RegisterDataSensorUseCase";
 
-export class CreateProductController {
-  constructor(readonly createProductUseCase: CreateProductUseCase) {}
+export class RegisterDataSensorController {
+  constructor(readonly registerDataSensorUseCase: RegisterDataSensorUseCase) {}
 
   async run(req: Request, res: Response) {
     const data = req.body;
     try {
-      const product = await this.createProductUseCase.run(
-        data.name,
-        data.description,
-        data.price
+      const dataSensor = await this.registerDataSensorUseCase.run(
+        data.co_ppm
       );
 
-      if (product)
+      if (dataSensor)
         //Code HTTP : 201 -> Creado
         res.status(201).send({
           status: "success",
           data: {
-            id: product?.id,
-            name: product?.name,
-            description: product?.description,
-            price: product?.price,
+            id: dataSensor?.id,
+            co_ppm: dataSensor?.co_ppm,
+            reg_date: dataSensor?.reg_date
           },
         });
       else

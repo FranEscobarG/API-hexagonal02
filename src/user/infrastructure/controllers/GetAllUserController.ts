@@ -1,24 +1,26 @@
 import { Request, Response } from "express";
 
-import { GetAllProductUseCase } from "../../application/GetAllProductUseCase";
+import { GetAllUserUseCase } from "../../application/GetAllUserUseCase";
 
-export class GetAllProductController {
-  constructor(readonly getAllProductUseCase: GetAllProductUseCase) {}
+export class GetAllUserController {
+  constructor(readonly getAllUserUseCase: GetAllUserUseCase) { }
 
   async run(req: Request, res: Response) {
     try {
-      const products = await this.getAllProductUseCase.run();
-      console.log(products);
-      if (products)
+      const users = await this.getAllUserUseCase.run();
+      console.log(users);
+      if (users)
         //Code HTTP : 200 -> Consulta exitosa
         res.status(200).send({
           status: "success",
-          data: products.map((product: any) => {
+          data: users.map((user: any) => {
             return {
-              id: product.id,
-              name: product.name,
-              description: product.description,
-              price: product.price,
+              id: user?.id,
+              name: user?.name,
+              lastname: user?.name,
+              email: user?.email,
+              phone: user?.phone,
+              password: user?.password,
             };
           }),
         });

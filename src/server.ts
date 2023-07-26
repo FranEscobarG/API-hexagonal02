@@ -1,17 +1,52 @@
 import express from "express";
-import { Signale } from "signale";
+import { Server } from "socket.io";
+import http from "http";
+import cors from "cors";
+import { handleWebSockets, sendUpdatedDataToClients } from "./websocket/WebsocketRouter";
+import { userRouter } from "./user/infrastructure/UserRouter";
+import { sensorRouter } from "./sensor/infrastructure/SensorRouter";
+import { MysqlSensorRepository } from "./sensor/infrastructure/MysqlSensorRepository";
 
-import { loadRouter } from "./event/LoadRouter";
-import { productRouter } from "./product/infrastructure/ProductRouter";
+class App {
+  private app: express.Application = express();
+  private server: http.Server = http.createServer(this.app);
+  private io: Server | null = null;
 
-const app = express();
+  constructor() {
+    this.configure();
+  }
 
-const signale = new Signale();
+  async configure() {
+    this.app.use(express.json());
+    this.app.use("/users", userRouter);
+    this.app.use(cors()); // Habilita CORS para responder a solicitudes desde cualquier origen
+    this.app.use("/sensor", sensorRouter);
 
-app.use(express.json());
-app.use("/products", productRouter);
-app.use("/load", loadRouter);
+    const sensorRepository = new MysqlSensorRepository();
+    const allSensorData = await sensorRepository.getAll();
 
-app.listen(3000, () => {
-  signale.success("Server online in port 3000");
-});
+    // Envía todos los datos a los clientes conectados al iniciar la aplicación
+    if (this.io && allSensorData) {
+      sendUpdatedDataToClients(allSensorData);
+    }
+  }
+
+  socketServer() {
+    this.io = new Server(this.server, {
+      cors: { origin: "*" } // Permitir conexiones desde cualquier origen en el socket.io
+    });
+
+    // Utiliza la función handleWebSockets para manejar los eventos de los WebSockets.
+    handleWebSockets(this.io);
+  }
+
+  start() {
+    this.server.listen(3000, () => {
+      console.log(`Server online in port 3000`);
+    });
+  }
+}
+
+const app: App = new App();
+app.socketServer();
+app.start();
